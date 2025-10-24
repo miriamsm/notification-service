@@ -43,3 +43,17 @@ jobs:
       # 6️⃣ Verify containers are running
       - name: Check running containers
         run: docker ps
+      - name: Create .env file
+        run: |
+          cat <<EOF > .env
+            POSTGRES_USER=postgres
+          POSTGRES_PASSWORD=1234
+          POSTGRES_DB=notification_service
+          REDIS_HOST=redis
+          REDIS_PORT=6379
+           API_PORT=3000
+          SENDGRID_API_KEY=${{ secrets.SENDGRID_API_KEY }}
+           TWILIO_ACCOUNT_SID=${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN=${{ secrets.TWILIO_AUTH_TOKEN }}
+          EOF
+
