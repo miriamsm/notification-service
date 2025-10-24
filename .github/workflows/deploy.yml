@@ -1,0 +1,45 @@
+name: Deploy Notification Service
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # allows manual runs from GitHub UI
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout your code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2️⃣ Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 3️⃣ Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Build the app
+      - name: Build project
+        run: npm run build
+
+      # 5️⃣ Run Docker Compose with secrets
+      - name: Run Docker Compose
+        env:
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }} # optional if you have DB
+        run: |
+          docker-compose down
+          docker-compose up --build -d
+
+      # 6️⃣ Verify containers are running
+      - name: Check running containers
+        run: docker ps

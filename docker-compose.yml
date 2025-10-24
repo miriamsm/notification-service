@@ -1,0 +1,145 @@
+# ==========================================
+# Notification Service Docker Compose
+# ==========================================
+
+# Remove version: it's obsolete in modern Compose
+
+# Define reusable configurations
+x-common-variables: &common-variables
+  NODE_ENV: development
+  DB_HOST: postgres
+  DB_PORT: 5432
+  DB_NAME: notification_service
+  DB_USER: postgres
+  DB_PASSWORD: 1234
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  QUEUE_NAME: notifications
+  WORKER_CONCURRENCY: 5
+
+services:
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: notification_service
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      notification_network: {}
+
+  # ==========================================
+  # Redis Cache & Queue
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      notification_network: {}
+
+  # ==========================================
+  # Database Migration
+  # ==========================================
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: on-failure
+    environment:
+      <<: *common-variables
+    command:
+      - node
+      - scripts/migrate.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      notification_network: {}
+
+  # ==========================================
+  # API Service
+  # ==========================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    networks:
+      notification_network: {}
+    command:
+      - node
+      - dist/server.js
+
+  # ==========================================
+  # Worker Service
+  # ==========================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *common-variables
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    networks:
+      notification_network: {}
+    command:
+      - node
+      - dist/worker.js
+    deploy:
+      replicas: 2
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  notification_network:
+    driver: bridge
+
+# ==========================================
+# Volumes (Persistent Storage)
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
