@@ -81,6 +81,8 @@ services:
   # API Service
   # ==========================================
   api:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile
@@ -107,6 +109,8 @@ services:
   # Worker Service
   # ==========================================
   worker:
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile

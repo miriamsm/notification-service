@@ -37,7 +37,7 @@ jobs:
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }} # optional if you have DB
         run: |
-          docker-compose down
+          docker compose down
           docker-compose up --build -d
 
       # 6️⃣ Verify containers are running
