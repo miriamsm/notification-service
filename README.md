@@ -29,7 +29,7 @@ Built with **Node.js, TypeScript, PostgreSQL, Redis**, and **Docker** — design
 ### 1. Clone Repository
 
 ```bash
-git clone <https://github.com/miriamsm/notification-service>
+git clone https://github.com/miriamsm/notification-service
 cd notification-service
 ```
 
@@ -95,9 +95,7 @@ notification_redis           Up (healthy)
 notification_migration       Exited (0)
 ```
 
----
-
-### 5. View Logs
+### 5. View Logs & Test Notification
 
 ```bash
 # All services
@@ -107,6 +105,41 @@ docker-compose logs -f
 docker-compose logs -f api
 docker-compose logs -f worker
 ```
+
+After viewing logs, you can **test creating a notification** using `curl`:
+
+```bash
+curl -X POST http://localhost:3000/api/notifications \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "123",
+    "channel": "email",
+    "template": "welcome_email",
+    "data": {
+      "name": "John Doe",
+      "app_name": "MyApp",
+      "link": "https://example.com"
+    }
+  }'
+```
+
+Once a notification is created, you can:
+
+#### Check notification status
+
+```bash
+curl http://localhost:3000/api/notifications/<notification_id>
+```
+
+> Replace `<notification_id>` with the ID returned by the POST request.
+
+#### Check queue statistics
+
+```bash
+curl http://localhost:3000/api/notifications/stats/queue
+```
+
+> This shows the number of jobs waiting, active, completed, and failed in the queue.
 
 ---
 
