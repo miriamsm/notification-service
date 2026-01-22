@@ -2,7 +2,7 @@
 # 📨 Notification Service
 
 A **modular and extensible notification system** supporting multiple channels (Email, SMS, Push).
-Built with **Node.js, TypeScript, PostgreSQL, Redis**, and **Docker** — designed for **scalability, reliability, and clean architecture**.
+Built with **Node.js, TypeScript, PostgreSQL, Redis**, and **Docker** designed for **scalability, reliability, and clean architecture**.
 
 ---
 
